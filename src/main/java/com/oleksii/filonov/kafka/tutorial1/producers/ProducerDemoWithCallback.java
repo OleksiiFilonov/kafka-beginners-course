@@ -21,13 +21,13 @@ public class ProducerDemoWithCallback {
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
         for (int i = 0; i < 10; i++) {
             //create a producer record
-            ProducerRecord<String, String> record = new ProducerRecord<>("first_topic", "hello_world_java");
+            ProducerRecord<String, String> record = new ProducerRecord<>("first_topic", "hello_world_java" + i);
             //send data - asynchronous
             producer.send(record, (metadata, exception) -> {
                 //executes every time record is successfully sent or an exception is thrown
                 if (exception == null) {
                     // the record was successfully sent
-                    logger.info("Received new metadata\n: Topic: {}\n Partition: {}\n Offset: {}\n Timestamp: {}",
+                    logger.info("Received new metadata:\nTopic: {}\nPartition: {}\nOffset: {}\nTimestamp: {}",
                             metadata.topic(), metadata.partition(), metadata.offset(), metadata.timestamp());
                 } else {
                     logger.error("Error while producing", exception);
