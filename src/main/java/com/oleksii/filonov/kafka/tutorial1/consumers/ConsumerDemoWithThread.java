@@ -25,8 +25,8 @@ public class ConsumerDemoWithThread {
         ConsumerRunnable myConsumerRunnable = new ConsumerRunnable(latch, "first_topic");
 
         //start the thread
-        Thread myThread = new Thread(myConsumerRunnable);
-        myThread.start();
+        Thread myConsumerThread = new Thread(myConsumerRunnable);
+        myConsumerThread.start();
 
         //add a shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
