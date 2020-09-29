@@ -49,26 +49,6 @@ public class ConsumerDemoWithThread {
         }
     }
 
-
-    MDC.put("AccountId", 1);
-    marker
-    //SQL
-    //SQL_UPDATE
-    public logDebug(logger, marker, message) {
-        rootLogLevel // INFO
-        if(MDC.get("AccountId") == 1) {//2, 4, all of those
-            if(currentLogLevel < DEBUG)
-                logger.info(message);
-            //2
-            logger.setLogLevel("com.appdynamics.cloudedge.EntityHandler", DEBUG);
-            logger.debug(message);
-            logger.setLogLevel("com.appdynamics.cloudedge.EntityHandler", currentLogLevel);
-        }
-        //check thread local check for account
-        sl4j.logINFO(message)
-    }
-}
-
     private static class ConsumerRunnable implements Runnable {
 
         private final CountDownLatch latch;
@@ -113,7 +93,5 @@ public class ConsumerDemoWithThread {
         }
     }
 
-    logInfo() {
-        logger.info("message {}", request);
-    }
 }
+
