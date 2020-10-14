@@ -36,7 +36,7 @@ public class TwitterProducer {
         Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
         StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
         // Optional: set up some followings and track terms
-        List<String> terms = List.of("kafka");
+        List<String> terms = List.of("election");
         hosebirdEndpoint.trackTerms(terms);
 
         // These secrets should be read from a config file
@@ -76,7 +76,7 @@ public class TwitterProducer {
         //loop to send tweets to Kafka
         while (!hosebirdClient.isDone()) {
             try {
-                String msg = msgQueue.poll(5, TimeUnit.SECONDS);
+                String msg = msgQueue.poll(15, TimeUnit.SECONDS);
                 LOGGER.info(msg);
                 producer.send(new ProducerRecord<>("twitter_tweets", null, msg), (metadata, e) -> {
                     if (e != null) {
