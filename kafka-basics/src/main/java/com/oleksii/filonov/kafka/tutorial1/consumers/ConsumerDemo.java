@@ -1,4 +1,4 @@
-package kafka.tutorial1.consumers;
+package com.oleksii.filonov.kafka.tutorial1.consumers;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;

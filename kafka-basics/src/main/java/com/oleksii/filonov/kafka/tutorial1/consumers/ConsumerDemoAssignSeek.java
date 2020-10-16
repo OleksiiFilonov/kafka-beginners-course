@@ -1,9 +1,12 @@
-package kafka.tutorial1.consumers;
+package com.oleksii.filonov.kafka.tutorial1.consumers;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +16,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class ConsumerDemoWithThread {
+public class ConsumerDemoAssignSeek {
 
-    private static Logger logger = LoggerFactory.getLogger(ConsumerDemoWithThread.class);
+    private static Logger logger = LoggerFactory.getLogger(ConsumerDemoAssignSeek.class);
 
     public static void main(String[] args) throws IOException {
         //latch for dealing with multiple threads
@@ -54,28 +57,41 @@ public class ConsumerDemoWithThread {
         private KafkaConsumer<String, String> consumer;
         private Logger logger = LoggerFactory.getLogger(ConsumerRunnable.class);
 
-        public ConsumerRunnable(CountDownLatch latch, String topic) throws IOException {
+        public ConsumerRunnable(CountDownLatch latch, String topic) {
             this.latch = latch;
             Properties properties = new Properties();
-            properties.load(ConsumerDemoWithThread.class.getResourceAsStream("/consumer.properties"));
+            properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+            properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+            properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+            properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+            //assign and seek mostly used to replay data or fetch specific message
             //create consumer
             consumer = new KafkaConsumer<>(properties);
+            //assign
+            TopicPartition partitionToReadFrom = new TopicPartition(topic, 0);
+            consumer.assign(List.of(partitionToReadFrom));
 
-            //subscribe consumer to topic(s)
+            //seek
+            long offsetToReadFrom = 70l;
+            consumer.seek(partitionToReadFrom, offsetToReadFrom);
             //String topic = "first_topic";
-            consumer.subscribe(List.of(topic));
         }
 
         @Override
         public void run() {
             try {
-                while (true) {
+                int numberOfMessagesToRead = 5;
+                while (numberOfMessagesToRead > 0) {
                     //poll for new data
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
                     for (ConsumerRecord<String, String> record : records) {
                         logger.info("Key: {}, Value: {}, Partition: {}, Offset: {}", record.key(), record.value(), record.partition(), record.offset());
+                        numberOfMessagesToRead--;
+                        if (numberOfMessagesToRead < 0)
+                            break;
                     }
                 }
+                latch.countDown();
             } catch (WakeupException exception) {
                 logger.info("Received shutdown signal!");
             } finally {
