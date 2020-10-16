@@ -1,4 +1,4 @@
-package com.oleksii.filonov.kafka.tutorial2;
+package tutorial2;
 
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;
