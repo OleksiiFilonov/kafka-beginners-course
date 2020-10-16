@@ -1,5 +1,6 @@
 package com.oleksii.filonov.kafka.tutorial3;
 
+import com.google.gson.JsonParser;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.Properties;
 
 public class ElasticSearchConsumer {
+
+    JsonParser parser = new JsonParser();
 
     private static Logger LOGGER = LoggerFactory.getLogger(ElasticSearchConsumer.class);
 
@@ -61,19 +64,32 @@ public class ElasticSearchConsumer {
         //poll for new data
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+            LOGGER.info("Received {} records", records.count());
             for (ConsumerRecord<String, String> record : records) {
                 //insert data into ES
-                IndexRequest indexRequest = new IndexRequest("twitter").source(record.value(), XContentType.JSON);
+                IndexRequest indexRequest = new IndexRequest("twitter").id(esConsumer.extractIdFromTweet(record.value())).source(record.value(), XContentType.JSON);
                 IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
                 LOGGER.info(response.getId());
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                     LOGGER.error("Interrupted", e);
                 }
             }
+            LOGGER.info("Committing offsets ...");
+            consumer.commitSync();
+            LOGGER.info("Offsets have been committed");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                LOGGER.error("While Loop Sleep interrupted", e);
+            }
         }
         //close Elastic Search client gracefully
 
+    }
+
+   private String extractIdFromTweet(String jsonTweet) {
+       return parser.parse(jsonTweet).getAsJsonObject().get("id_str").getAsString();
     }
 }
