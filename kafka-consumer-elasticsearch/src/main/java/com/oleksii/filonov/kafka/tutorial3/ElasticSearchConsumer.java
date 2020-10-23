@@ -9,8 +9,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -64,17 +65,19 @@ public class ElasticSearchConsumer {
         //poll for new data
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
-            LOGGER.info("Received {} records", records.count());
+            final int recordsCount = records.count();
+            LOGGER.info("Received {} records", recordsCount);
+            BulkRequest bulkRequest = new BulkRequest();
             for (ConsumerRecord<String, String> record : records) {
                 //insert data into ES
-                IndexRequest indexRequest = new IndexRequest("twitter").id(esConsumer.extractIdFromTweet(record.value())).source(record.value(), XContentType.JSON);
-                IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
-                LOGGER.info(response.getId());
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    LOGGER.error("Interrupted", e);
-                }
+                bulkRequest.add(
+                        new IndexRequest("twitter")
+                                .id(esConsumer.extractIdFromTweet(record.value()))
+                                .source(record.value(), XContentType.JSON));
+            }
+            if (recordsCount > 0) {
+                BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+                LOGGER.debug("Send {} items to ES in bulk", bulkResponse.getItems().length);
             }
             LOGGER.info("Committing offsets ...");
             consumer.commitSync();
